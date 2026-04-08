@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from models import Fornecedor
-from services import calcular_score, classificar
+from backend.models import Fornecedor
+from backend.services import calcular_score, classificar
 
 app = FastAPI()
 
