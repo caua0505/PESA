@@ -22,37 +22,30 @@
   <!-- MAIN -->
   <main class="max-w-6xl mx-auto mt-8 grid grid-cols-3 gap-6">
 
+    <!-- Cadastrar Novo Fornecedor -->
+    <div class="mb-4">
+      <h3 class="font-semibold">Cadastrar Novo Fornecedor</h3>
+
+      <input id="novoNome" placeholder="Nome" class="p-2 border rounded w-full mb-2">
+      <input id="novoCnpj" placeholder="CNPJ" class="p-2 border rounded w-full mb-2">
+
+      <button onclick="cadastrarFornecedor()"
+        class="bg-blue-600 text-white px-4 py-2 rounded">
+        Cadastrar
+      </button>
+    </div>
+
     <!-- FORM -->
     <section class="col-span-2 bg-white p-6 rounded-2xl shadow">
-      <h2 class="text-lg font-semibold mb-4 text-blue-900">Cadastro de Fornecedor</h2>
+      <h2 class="text-lg font-semibold mb-4 text-blue-900">Consulta de Fornecedor</h2>
 
       <div class="grid grid-cols-2 gap-4">
         <input id="nome" placeholder="Nome da empresa" class="p-2 border rounded-lg" />
         <input id="cnpj" placeholder="CNPJ" class="p-2 border rounded-lg" />
-
-        <div>
-          <label class="text-xs">Compliance</label>
-          <input id="compliance" type="range" min="0" max="100" value="50" class="w-full" />
-        </div>
-
-        <div>
-          <label class="text-xs">ESG</label>
-          <input id="esg" type="range" min="0" max="100" value="50" class="w-full" />
-        </div>
-
-        <div>
-          <label class="text-xs">Reputação</label>
-          <input id="reputacao" type="range" min="0" max="100" value="50" class="w-full" />
-        </div>
-
-        <div>
-          <label class="text-xs">Performance</label>
-          <input id="performance" type="range" min="0" max="100" value="50" class="w-full" />
-        </div>
       </div>
 
       <button id="btnAvaliar"
-        class="mt-6 w-full bg-transparent text-white py-3 rounded-xl hover:bg-blue-800 transition">
+        class="mt-6 w-full bg-yellow-500 text-white py-3 rounded-xl hover:bg-yellow-600 transition">
         Avaliar Fornecedor
       </button>
     </section>
@@ -62,14 +55,35 @@
       <h2 class="text-lg font-semibold mb-4 text-blue-900">Resultado</h2>
 
       <div id="resultado" class="text-sm text-gray-700">
-        <p>Preencha os dados e clique em avaliar.</p>
+        <p>Digite um CNPJ ou nome para buscar.</p>
       </div>
     </section>
 
   </main>
 
+  <!-- DASHBOARD -->
+  <section class="max-w-6xl mx-auto mt-6 bg-white p-6 rounded-2xl shadow">
+    <h2 class="text-lg font-semibold mb-4 text-blue-900">Ranking de Fornecedores</h2>
+
+    <table class="w-full text-sm border">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="p-2 text-left">Empresa</th>
+          <th class="p-2 text-center">Score</th>
+          <th class="p-2 text-center">Classificação</th>
+        </tr>
+      </thead>
+      <tbody id="ranking"></tbody>
+    </table>
+  </section>
+
   <!-- JS EXTERNO -->
   <script src="/static/js/app.js"></script>
+
+  <!-- GARANTE QUE O BOTÃO FUNCIONE -->
+  <script>
+    document.getElementById("btnAvaliar").addEventListener("click", avaliarFornecedor);
+  </script>
 
 </body>
 </html>
