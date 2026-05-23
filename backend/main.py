@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,166 +7,432 @@ import random
 import os
 import sys
 
-from backend.services import calcular_score, classificar, avaliar_ia
+from backend.services import (
+    calcular_score,
+    classificar,
+    avaliar_ia
+)
+
 from backend.models import Fornecedor
 
-# =========================================
-# CONFIGURAÇÃO DE PATH PARA EXE
-# =========================================
-if getattr(sys, "frozen", False):
-    BASE_DIR = getattr(sys, "_MEIPASS", os.path.abspath("."))
-else:
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+# =========================================
+# PATH NORMAL + EXE (PYINSTALLER)
+# =========================================
+
+if getattr(sys, "frozen", False):
+
+    BASE_DIR = getattr(
+        sys,
+        "_MEIPASS",
+        os.path.abspath(".")
+    )
+
+else:
+
+    BASE_DIR = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            ".."
+        )
+    )
+
+FRONTEND_DIR = os.path.join(
+    BASE_DIR,
+    "frontend"
+)
+
+print("BASE_DIR =", BASE_DIR)
+print("FRONTEND_DIR =", FRONTEND_DIR)
+
 
 # =========================================
 # FASTAPI
 # =========================================
+
 app = FastAPI()
 
 app.add_middleware(
+
     CORSMiddleware,
+
     allow_origins=["*"],
+
     allow_credentials=True,
+
     allow_methods=["*"],
-    allow_headers=["*"],
+
+    allow_headers=["*"]
 )
+
 
 # =========================================
 # STATIC FILES
 # =========================================
-app.mount(
-    "/static",
-    StaticFiles(directory=FRONTEND_DIR),
-    name="static"
-)
+
+if os.path.exists(FRONTEND_DIR):
+
+    app.mount(
+
+        "/static",
+
+        StaticFiles(
+            directory=FRONTEND_DIR
+        ),
+
+        name="static"
+    )
+
+else:
+
+    print(
+        "ERRO → frontend não encontrado"
+    )
+
 
 # =========================================
-# BASE MOCK IA
+# BANCO EM MEMÓRIA
 # =========================================
-fornecedores_db = [
-    {"nome": "EcoLog", "cnpj": "111", "compliance": 90, "esg": 95, "reputacao": 88, "performance": 92},
-    {"nome": "TransLog", "cnpj": "222", "compliance": 70, "esg": 65, "reputacao": 60, "performance": 75},
-    {"nome": "GreenTech", "cnpj": "333", "compliance": 85, "esg": 90, "reputacao": 80, "performance": 88},
-    {"nome": "BuildCorp", "cnpj": "444", "compliance": 50, "esg": 45, "reputacao": 40, "performance": 55},
-    {"nome": "SafeSupply", "cnpj": "555", "compliance": 95, "esg": 85, "reputacao": 90, "performance": 93},
-    {"nome": "EcoParts", "cnpj": "666", "compliance": 80, "esg": 82, "reputacao": 78, "performance": 85},
-    {"nome": "LogiFast", "cnpj": "777", "compliance": 60, "esg": 55, "reputacao": 58, "performance": 65},
-    {"nome": "FutureEnergy", "cnpj": "888", "compliance": 92, "esg": 97, "reputacao": 93, "performance": 95},
-    {"nome": "MetalWorks", "cnpj": "999", "compliance": 55, "esg": 50, "reputacao": 48, "performance": 60},
-    {"nome": "PrimeServices", "cnpj": "000", "compliance": 75, "esg": 78, "reputacao": 74, "performance": 80},
-]
+
+fornecedores_db = []
+
+
+# =========================================
+# VALIDADOR CNPJ
+# =========================================
+
+def validar_cnpj(cnpj:str):
+
+    cnpj = "".join(
+        filter(str.isdigit, cnpj)
+    )
+
+    if len(cnpj) != 14:
+
+        return False
+
+    if cnpj == cnpj[0] * 14:
+
+        return False
+
+    peso1 = [5,4,3,2,9,8,7,6,5,4,3,2]
+
+    soma = sum(
+
+        int(cnpj[i]) * peso1[i]
+
+        for i in range(12)
+    )
+
+    dig1 = 11 - (soma % 11)
+
+    if dig1 >= 10:
+
+        dig1 = 0
+
+    peso2 = [6,5,4,3,2,9,8,7,6,5,4,3,2]
+
+    soma = sum(
+
+        int(cnpj[i]) * peso2[i]
+
+        for i in range(13)
+    )
+
+    dig2 = 11 - (soma % 11)
+
+    if dig2 >= 10:
+
+        dig2 = 0
+
+    return (
+
+        int(cnpj[12]) == dig1
+
+        and
+
+        int(cnpj[13]) == dig2
+    )
+
 
 # =========================================
 # HOME
 # =========================================
+
 @app.get("/")
 def home():
-    return FileResponse(
-        os.path.join(FRONTEND_DIR, "index.html")
+
+    arquivo = os.path.join(
+        FRONTEND_DIR,
+        "index.html"
     )
 
+    if os.path.exists(arquivo):
+
+        return FileResponse(arquivo)
+
+    raise HTTPException(
+
+        status_code=404,
+
+        detail="index.html não encontrado"
+    )
+
+
 # =========================================
-# IA - AVALIAÇÃO AUTOMÁTICA
+# IA - CONSULTA
 # =========================================
+
 @app.get("/ia/avaliar")
 def avaliar_fornecedor(
-    cnpj: str | None = None,
-    nome: str | None = None
+
+    cnpj:str | None = None,
+
+    nome:str | None = None
 ):
 
     if not cnpj and not nome:
-        return {"erro": "Informe nome ou CNPJ"}
 
-    for f in fornecedores_db:
+        return {
+
+            "erro":
+            "Informe nome ou CNPJ"
+        }
+
+    for fornecedor in fornecedores_db:
 
         encontrou = (
-            cnpj and f["cnpj"] == cnpj
-        ) or (
-            nome and nome.lower() in f["nome"].lower()
+
+            (cnpj and fornecedor["cnpj"] == cnpj)
+
+            or
+
+            (
+
+                nome
+
+                and
+
+                nome.lower()
+
+                in
+
+                fornecedor["nome"].lower()
+            )
         )
 
         if encontrou:
 
-            score, decisao = avaliar_ia(f)
+            score, decisao = avaliar_ia(
+                fornecedor
+            )
 
             return {
-                "nome": f["nome"],
-                "cnpj": f["cnpj"],
-                "score": round(score, 2),
-                "classificacao": classificar(score),
-                "decisao_ia": decisao
+
+                "nome":
+                    fornecedor["nome"],
+
+                "cnpj":
+                    fornecedor["cnpj"],
+
+                "score":
+                    round(score,2),
+
+                "classificacao":
+                    classificar(score),
+
+                "decisao_ia":
+                    decisao
             }
 
-    return {"erro": "Fornecedor não encontrado"}
+    return {
+
+        "erro":
+        "Fornecedor não encontrado"
+    }
+
 
 # =========================================
 # AVALIAÇÃO MANUAL
 # =========================================
+
 @app.post("/avaliar")
-def avaliar(f: Fornecedor):
+def avaliar(
+
+    f:Fornecedor
+):
 
     score = calcular_score(
+
         f.compliance,
+
         f.esg,
+
         f.reputacao,
+
         f.performance
     )
 
     return {
-        "nome": f.nome,
-        "cnpj": f.cnpj,
-        "score": round(score, 2),
-        "classificacao": classificar(score)
+
+        "nome":f.nome,
+
+        "cnpj":f.cnpj,
+
+        "score":
+            round(score,2),
+
+        "classificacao":
+            classificar(score)
     }
 
+
 # =========================================
-# CADASTRAR FORNECEDOR
+# CADASTRO FORNECEDOR
 # =========================================
+
 @app.post("/fornecedor")
-def cadastrar_fornecedor(nome: str, cnpj: str):
+def cadastrar_fornecedor(
 
-    novo = {
-        "nome": nome,
-        "cnpj": cnpj,
-        "compliance": random.randint(60, 100),
-        "esg": random.randint(60, 100),
-        "reputacao": random.randint(60, 100),
-        "performance": random.randint(60, 100),
-    }
+    nome:str="",
 
-    fornecedores_db.append(novo)
+    cnpj:str=""
+):
 
-    score, decisao = avaliar_ia(novo)
+    try:
 
-    return {
-        "mensagem": "Fornecedor cadastrado com sucesso",
-        "score": round(score, 2),
-        "decisao": decisao
-    }
+        nome = nome.strip()
+
+        cnpj = "".join(
+            filter(str.isdigit, cnpj)
+        )
+
+        if not nome or not cnpj:
+
+            return {
+
+                "erro":
+                "Nome e CNPJ obrigatórios"
+            }
+
+        if not validar_cnpj(cnpj):
+
+            return {
+
+                "erro":
+                "CNPJ inválido"
+            }
+
+        for fornecedor in fornecedores_db:
+
+            if fornecedor["cnpj"] == cnpj:
+
+                return {
+
+                    "erro":
+                    "Fornecedor já cadastrado"
+                }
+
+        novo = {
+
+            "nome":nome,
+
+            "cnpj":cnpj,
+
+            "compliance":
+                random.randint(60,100),
+
+            "esg":
+                random.randint(60,100),
+
+            "reputacao":
+                random.randint(60,100),
+
+            "performance":
+                random.randint(60,100)
+        }
+
+        fornecedores_db.append(
+            novo
+        )
+
+        score, decisao = avaliar_ia(
+            novo
+        )
+
+        print(
+            "NOVO FORNECEDOR:",
+            novo
+        )
+
+        return {
+
+            "mensagem":
+            "Fornecedor cadastrado com sucesso",
+
+            "nome":nome,
+
+            "cnpj":cnpj,
+
+            "score":
+                round(score,2),
+
+            "classificacao":
+                classificar(score),
+
+            "decisao":
+                decisao
+        }
+
+    except Exception as e:
+
+        print(str(e))
+
+        return {
+
+            "erro":
+            str(e)
+        }
+
 
 # =========================================
-# RANKING
+# RANKING IA
 # =========================================
+
 @app.get("/ia/ranking")
 def ranking():
 
-    ranking_lista = []
+    ranking_ia = []
 
-    for f in fornecedores_db:
+    for fornecedor in fornecedores_db:
 
-        score, _ = avaliar_ia(f)
+        score, decisao = avaliar_ia(
+            fornecedor
+        )
 
-        ranking_lista.append({
-            "nome": f["nome"],
-            "score": round(score, 2),
-            "classificacao": classificar(score)
+        ranking_ia.append({
+
+            "nome":
+                fornecedor["nome"],
+
+            "cnpj":
+                fornecedor["cnpj"],
+
+            "score":
+                round(score,2),
+
+            "classificacao":
+                classificar(score),
+
+            "decisao":
+                decisao
         })
 
-    ranking_lista.sort(
-        key=lambda x: x["score"],
+    ranking_ia.sort(
+
+        key=lambda x:x["score"],
+
         reverse=True
     )
 
-    return ranking_lista
+    return ranking_ia

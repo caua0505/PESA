@@ -1,0 +1,255 @@
+/* =====================================
+PESA DASHBOARD CSS
+===================================== */
+
+body{
+
+    font-family:Arial,sans-serif;
+
+    background:#f1f5f9;
+
+}
+
+
+/* HEADER */
+
+header{
+
+    box-shadow:0 8px 20px rgba(
+        0,0,0,0.12
+    );
+
+}
+
+
+/* CARDS */
+
+.bg-white{
+
+    transition:all .25s ease;
+
+}
+
+.bg-white:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 15px 35px rgba(
+        0,0,0,.10
+    );
+
+}
+
+
+/* INPUTS */
+
+input{
+
+    outline:none;
+
+    transition:.25s;
+
+}
+
+input:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 0 4px rgba(
+        37,
+        99,
+        235,
+        .15
+    );
+
+}
+
+
+/* BOTÕES */
+
+button{
+
+    transition:all .25s ease;
+
+}
+
+button:hover{
+
+    transform:scale(1.02);
+
+}
+
+
+/* KPI */
+
+#kpiTotal{
+
+    color:#1e3a8a;
+
+}
+
+#kpiScore{
+
+    color:#16a34a;
+
+}
+
+#kpiAprovados{
+
+    color:#059669;
+
+}
+
+#kpiCriticos{
+
+    color:#dc2626;
+
+}
+
+
+/* TABELA */
+
+table{
+
+    border-collapse:collapse;
+
+}
+
+thead{
+
+    position:sticky;
+
+    top:0;
+
+    background:white;
+
+    z-index:5;
+
+}
+
+tbody tr{
+
+    transition:.2s;
+
+}
+
+tbody tr:hover{
+
+    background:#eff6ff;
+
+}
+
+
+/* RANKING VISUAL */
+
+#rankingChart{
+
+    width:100% !important;
+
+    height:100% !important;
+
+}
+
+
+/* RESULTADO IA */
+
+#resultado{
+
+    min-height:120px;
+
+}
+
+#resultado p{
+
+    line-height:1.7;
+
+}
+
+
+/* SCROLL CUSTOM */
+
+::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#e2e8f0;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#2563eb;
+
+    border-radius:10px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:#1d4ed8;
+
+}
+
+
+/* ANIMAÇÃO */
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(8px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+.bg-white{
+
+    animation:fadeIn .35s ease;
+
+}
+
+
+/* RESPONSIVO */
+
+@media(max-width:1024px){
+
+    h1{
+
+        font-size:1.8rem;
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    section{
+
+        padding-left:14px;
+
+        padding-right:14px;
+
+    }
+
+    table{
+
+        font-size:.85rem;
+
+    }
+
+}

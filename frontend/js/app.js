@@ -1,177 +1,565 @@
-// ===============================
-// 🔹 CONFIG INICIAL SEGURA
-// ===============================
+// =====================================
+// CONFIG INICIAL
+// =====================================
+
+let rankingChart = null;
+
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ App carregado");
 
-  // Busca automática (sem botão)
-  const inputCnpj = document.getElementById("cnpj");
-  const inputNome = document.getElementById("nome");
+    console.log("✅ App carregado");
 
-  if (inputCnpj) {
-    inputCnpj.addEventListener("input", debounce(avaliarFornecedor, 500));
-  }
+    const inputCnpj =
+        document.getElementById("cnpj");
 
-  if (inputNome) {
-    inputNome.addEventListener("input", debounce(avaliarFornecedor, 500));
-  }
+    const inputNome =
+        document.getElementById("nome");
 
-  carregarRanking();
+    if(inputCnpj){
+
+        inputCnpj.addEventListener(
+            "input",
+            debounce(avaliarFornecedor,600)
+        );
+    }
+
+    if(inputNome){
+
+        inputNome.addEventListener(
+            "input",
+            debounce(avaliarFornecedor,600)
+        );
+    }
+
+    carregarRanking();
 });
 
 
-// ===============================
-// 🔹 DEBOUNCE (evita muitas chamadas)
-// ===============================
-function debounce(func, delay) {
-  let timeout;
-  return function () {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, arguments), delay);
-  };
+// =====================================
+// DEBOUNCE
+// =====================================
+
+function debounce(fn,delay){
+
+    let timeout;
+
+    return (...args)=>{
+
+        clearTimeout(timeout);
+
+        timeout = setTimeout(
+            ()=> fn(...args),
+            delay
+        );
+    };
 }
 
 
-// ===============================
-// 🔹 AVALIAR FORNECEDOR (IA)
-// ===============================
-async function avaliarFornecedor() {
-  const resultado = document.getElementById("resultado");
+// =====================================
+// CONSULTA IA
+// =====================================
 
-  try {
-    let cnpj = document.getElementById("cnpj")?.value || "";
-    let nome = document.getElementById("nome")?.value || "";
+async function avaliarFornecedor(){
 
-    cnpj = cnpj.trim().replace(/\D/g, "");
-    nome = nome.trim();
+    const resultado =
+        document.getElementById(
+            "resultado"
+        );
 
-    if (!cnpj && !nome) {
-      resultado.innerHTML = `<p class="text-gray-400">Digite um nome ou CNPJ...</p>`;
-      return;
+    try{
+
+        let nome =
+            document
+            .getElementById("nome")
+            ?.value || "";
+
+        let cnpj =
+            document
+            .getElementById("cnpj")
+            ?.value || "";
+
+        nome = nome.trim();
+
+        cnpj = cnpj
+            .trim()
+            .replace(/\D/g,"");
+
+        if(!nome && !cnpj){
+
+            resultado.innerHTML=`
+                <p class="text-gray-400">
+                    Digite nome ou CNPJ
+                </p>
+            `;
+
+            return;
+        }
+
+        let url="/ia/avaliar?";
+
+        if(cnpj){
+
+            url += `cnpj=${cnpj}`;
+
+        }else{
+
+            url +=
+            `nome=${encodeURIComponent(nome)}`;
+        }
+
+        const response =
+            await fetch(url);
+
+        const data =
+            await response.json();
+
+        if(data.erro){
+
+            resultado.innerHTML=`
+                <p class="text-red-500">
+                    ${data.erro}
+                </p>
+            `;
+
+            return;
+        }
+
+        resultado.innerHTML=`
+
+            <div class="space-y-2">
+
+                <p class="font-bold text-xl">
+                    ${data.nome}
+                </p>
+
+                <p>
+                    <strong>CNPJ:</strong>
+                    ${data.cnpj}
+                </p>
+
+                <p>
+                    <strong>Score:</strong>
+                    ${data.score}
+                </p>
+
+                <p class="text-green-600 font-semibold">
+                    ${data.classificacao}
+                </p>
+
+                <p class="text-blue-600">
+                    ${data.decisao_ia}
+                </p>
+
+            </div>
+        `;
+
     }
 
-    let url = "/ia/avaliar?";
+    catch(error){
 
-    if (cnpj) {
-      url += `cnpj=${cnpj}`;
-    } else {
-      url += `nome=${encodeURIComponent(nome)}`;
+        console.error(error);
+
+        resultado.innerHTML=`
+            <p class="text-red-500">
+                Erro ao buscar fornecedor
+            </p>
+        `;
     }
-
-    console.log("📡 Buscando:", url);
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error("Erro na API");
-    }
-
-    const data = await response.json();
-    console.log("📥 Resultado:", data);
-
-    if (!data || data.erro) {
-      resultado.innerHTML = `<p class="text-red-500">${data?.erro || "Fornecedor não encontrado"}</p>`;
-      return;
-    }
-
-    resultado.innerHTML = `
-      <div class="space-y-2">
-        <p class="font-bold text-lg">${data.nome}</p>
-        <p><strong>CNPJ:</strong> ${data.cnpj}</p>
-        <p><strong>Score:</strong> ${data.score}</p>
-        <p class="font-semibold text-green-600">${data.classificacao}</p>
-        <p class="text-blue-600">${data.decisao_ia}</p>
-      </div>
-    `;
-
-  } catch (error) {
-    console.error("❌ Erro:", error);
-    resultado.innerHTML = `<p class="text-red-500">Erro ao buscar fornecedor</p>`;
-  }
 }
 
 
-// ===============================
-// 🔥 CADASTRAR FORNECEDOR (IA)
-// ===============================
-async function cadastrarFornecedor() {
-  try {
-    const nome = document.getElementById("novoNome")?.value || "";
-    let cnpj = document.getElementById("novoCnpj")?.value || "";
+// =====================================
+// CADASTRO
+// =====================================
 
-    cnpj = cnpj.replace(/\D/g, "");
+async function cadastrarFornecedor(){
 
-    if (!nome || !cnpj) {
-      alert("Preencha nome e CNPJ");
-      return;
+    try{
+
+        const nome =
+            document
+            .getElementById("novoNome")
+            .value
+            .trim();
+
+        let cnpj =
+            document
+            .getElementById("novoCnpj")
+            .value
+            .trim();
+
+        cnpj =
+            cnpj.replace(/\D/g,"");
+
+        if(!nome || !cnpj){
+
+            alert(
+                "Preencha nome e CNPJ"
+            );
+
+            return;
+        }
+
+        const response =
+            await fetch(
+
+                `/fornecedor?nome=${encodeURIComponent(nome)}&cnpj=${cnpj}`,
+
+                {
+                    method:"POST"
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if(data.erro){
+
+            alert(data.erro);
+
+            return;
+        }
+
+        alert(data.mensagem);
+
+        document.getElementById(
+            "novoNome"
+        ).value="";
+
+        document.getElementById(
+            "novoCnpj"
+        ).value="";
+
+        await carregarRanking();
+
     }
 
-    const response = await fetch(`/fornecedor?nome=${encodeURIComponent(nome)}&cnpj=${cnpj}`, {
-      method: "POST"
+    catch(error){
+
+        console.error(error);
+
+        alert(
+            "Erro ao cadastrar fornecedor"
+        );
+    }
+}
+
+// =====================================
+// VALIDADOR CNPJ
+// =====================================
+
+function validarCNPJ(cnpj){
+
+    cnpj = cnpj.replace(/\D/g,'');
+
+    if(cnpj.length !== 14)
+        return false;
+
+    // elimina repetidos
+    if(/^(\d)\1+$/.test(cnpj))
+        return false;
+
+    let tamanho =
+        cnpj.length - 2;
+
+    let numeros =
+        cnpj.substring(0,tamanho);
+
+    let digitos =
+        cnpj.substring(tamanho);
+
+    let soma = 0;
+    let pos = tamanho - 7;
+
+    for(let i=tamanho;i>=1;i--){
+
+        soma +=
+            numeros.charAt(
+                tamanho-i
+            ) * pos--;
+
+        if(pos < 2)
+            pos = 9;
+    }
+
+    let resultado =
+        soma % 11 < 2
+        ? 0
+        : 11 - soma % 11;
+
+    if(resultado != digitos.charAt(0))
+        return false;
+
+    tamanho += 1;
+
+    numeros =
+        cnpj.substring(
+            0,
+            tamanho
+        );
+
+    soma = 0;
+
+    pos =
+        tamanho - 7;
+
+    for(let i=tamanho;i>=1;i--){
+
+        soma +=
+            numeros.charAt(
+                tamanho-i
+            ) * pos--;
+
+        if(pos < 2)
+            pos = 9;
+    }
+
+    resultado =
+        soma % 11 < 2
+        ? 0
+        : 11 - soma % 11;
+
+    if(resultado != digitos.charAt(1))
+        return false;
+
+    return true;
+}
+
+// =====================================
+// KPI DASHBOARD
+// =====================================
+
+function atualizarDashboard(data){
+
+    const total =
+        data.length;
+
+    let scoreTotal = 0;
+    let aprovados = 0;
+    let criticos = 0;
+
+    data.forEach(f=>{
+
+        scoreTotal +=
+            Number(f.score || 0);
+
+        if(
+            f.classificacao
+            ?.startsWith("A")
+        ){
+            aprovados++;
+        }
+
+        if(
+            f.classificacao
+            ?.startsWith("C")
+        ){
+            criticos++;
+        }
     });
 
-    if (!response.ok) {
-      throw new Error("Erro ao cadastrar");
-    }
+    const scoreMedio =
 
-    const data = await response.json();
+        total > 0
 
-    console.log("✅ Cadastrado:", data);
+        ? (
+            scoreTotal / total
+        ).toFixed(1)
 
-    alert("Fornecedor cadastrado com sucesso!");
+        : 0;
 
-    // limpa campos
-    document.getElementById("novoNome").value = "";
-    document.getElementById("novoCnpj").value = "";
+    document.getElementById(
+        "kpiTotal"
+    ).innerText = total;
 
-    // atualiza ranking
-    carregarRanking();
+    document.getElementById(
+        "kpiScore"
+    ).innerText = scoreMedio;
 
-  } catch (error) {
-    console.error("❌ Erro:", error);
-    alert("Erro ao cadastrar fornecedor");
-  }
+    document.getElementById(
+        "kpiAprovados"
+    ).innerText = aprovados;
+
+    document.getElementById(
+        "kpiCriticos"
+    ).innerText = criticos;
 }
 
 
-// ===============================
-// 🔥 RANKING
-// ===============================
-async function carregarRanking() {
-  try {
-    const response = await fetch("/ia/ranking");
+// =====================================
+// GRÁFICO
+// =====================================
 
-    if (!response.ok) {
-      console.warn("⚠️ Ranking não disponível");
-      return;
+function atualizarGrafico(data){
+
+    const canvas =
+        document.getElementById(
+            "rankingChart"
+        );
+
+    if(!canvas){
+
+        console.log(
+            "Canvas não encontrado"
+        );
+
+        return;
     }
 
-    const data = await response.json();
+    const nomes =
+        data.map(
+            f=>f.nome
+        );
 
-    let html = "";
+    const scores =
+        data.map(
+            f=>Number(f.score)
+        );
 
-    data.forEach((f, index) => {
-      let cor = "text-gray-700";
+    if(rankingChart){
 
-      if (f.classificacao?.startsWith("A")) cor = "text-green-600";
-      if (f.classificacao?.startsWith("B")) cor = "text-yellow-600";
-      if (f.classificacao?.startsWith("C")) cor = "text-red-600";
-
-      html += `
-        <tr class="border-b">
-          <td class="p-2">${index + 1}º - ${f.nome}</td>
-          <td class="p-2 text-center">${f.score}</td>
-          <td class="p-2 text-center ${cor} font-semibold">${f.classificacao}</td>
-        </tr>
-      `;
-    });
-
-    const ranking = document.getElementById("ranking");
-    if (ranking) {
-      ranking.innerHTML = html;
+        rankingChart.destroy();
     }
 
-  } catch (error) {
-    console.log("⚠️ Ranking ignorado");
-  }
+    rankingChart = new Chart(
+
+        canvas,
+
+        {
+
+            type:"bar",
+
+            data:{
+
+                labels:nomes,
+
+                datasets:[{
+
+                    label:"Score ESG",
+
+                    data:scores,
+
+                    backgroundColor:"#2563eb"
+
+                }]
+            },
+
+            options:{
+
+                responsive:true,
+
+                maintainAspectRatio:false,
+
+                plugins:{
+
+                    legend:{
+                        display:false
+                    }
+                },
+
+                scales:{
+
+                    y:{
+
+                        beginAtZero:true,
+
+                        max:100
+                    }
+                }
+            }
+        }
+    );
+}
+
+
+// =====================================
+// RANKING
+// =====================================
+
+async function carregarRanking(){
+
+    try{
+
+        const response =
+            await fetch(
+                "/ia/ranking"
+            );
+
+        const data =
+            await response.json();
+
+        atualizarDashboard(data);
+
+        atualizarGrafico(data);
+
+        const ranking =
+            document.getElementById(
+                "ranking"
+            );
+
+        if(!ranking) return;
+
+        let html="";
+
+        data.forEach(
+            (f,index)=>{
+
+                let cor =
+                    "text-gray-700";
+
+                if(
+                    f.classificacao
+                    ?.startsWith("A")
+                )
+                    cor="text-green-600";
+
+                else if(
+                    f.classificacao
+                    ?.startsWith("B")
+                )
+                    cor="text-yellow-600";
+
+                else if(
+                    f.classificacao
+                    ?.startsWith("C")
+                )
+                    cor="text-red-600";
+
+                html += `
+
+                <tr class="border-b hover:bg-gray-50">
+
+                    <td class="p-2">
+
+                        ${index+1}º — ${f.nome}
+
+                    </td>
+
+                    <td class="p-2 text-center">
+
+                        ${f.score}
+
+                    </td>
+
+                    <td class="p-2 text-center ${cor} font-semibold">
+
+                        ${f.classificacao}
+
+                    </td>
+
+                </tr>
+                `;
+            }
+        );
+
+        ranking.innerHTML = html;
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Erro ranking:",
+            error
+        );
+    }
 }

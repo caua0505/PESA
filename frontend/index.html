@@ -1,89 +1,298 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PESA | Homologação de Fornecedores</title>
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PESA | Dashboard ESG IA</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- CSS PERSONALIZADO -->
+<link rel="stylesheet" href="/static/css/style.css">
+
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-slate-100 min-h-screen">
 
-  <!-- HEADER -->
-  <header class="bg-yellow-500 text-white p-6 shadow-lg">
-    <div class="max-w-6xl mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold">PESA - Homologação</h1>
-      <span class="text-sm">Piloto ESG + IA</span>
-    </div>
-  </header>
+<!-- HEADER -->
 
-  <!-- MAIN -->
-  <main class="max-w-6xl mx-auto mt-8 grid grid-cols-3 gap-6">
+<header class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-xl">
 
-    <!-- Cadastrar Novo Fornecedor -->
-    <div class="mb-4">
-      <h3 class="font-semibold">Cadastrar Novo Fornecedor</h3>
+<div class="max-w-7xl mx-auto p-6 flex justify-between items-center">
 
-      <input id="novoNome" placeholder="Nome" class="p-2 border rounded w-full mb-2">
-      <input id="novoCnpj" placeholder="CNPJ" class="p-2 border rounded w-full mb-2">
+<div>
 
-      <button onclick="cadastrarFornecedor()"
-        class="bg-blue-600 text-white px-4 py-2 rounded">
-        Cadastrar
-      </button>
-    </div>
+<h1 class="text-3xl font-bold">
+PESA Dashboard
+</h1>
 
-    <!-- FORM -->
-    <section class="col-span-2 bg-white p-6 rounded-2xl shadow">
-      <h2 class="text-lg font-semibold mb-4 text-blue-900">Consulta de Fornecedor</h2>
+<p class="text-yellow-100">
+Homologação Inteligente ESG + IA
+</p>
 
-      <div class="grid grid-cols-2 gap-4">
-        <input id="nome" placeholder="Nome da empresa" class="p-2 border rounded-lg" />
-        <input id="cnpj" placeholder="CNPJ" class="p-2 border rounded-lg" />
-      </div>
+</div>
 
-      <button id="btnAvaliar"
-        class="mt-6 w-full bg-yellow-500 text-white py-3 rounded-xl hover:bg-yellow-600 transition">
-        Avaliar Fornecedor
-      </button>
-    </section>
+<div class="text-right">
 
-    <!-- RESULTADO -->
-    <section class="bg-white p-6 rounded-2xl shadow">
-      <h2 class="text-lg font-semibold mb-4 text-blue-900">Resultado</h2>
+<p class="font-semibold">
+Piloto Executivo
+</p>
 
-      <div id="resultado" class="text-sm text-gray-700">
-        <p>Digite um CNPJ ou nome para buscar.</p>
-      </div>
-    </section>
+<p class="text-sm">
+FastAPI + IA
+</p>
 
-  </main>
+</div>
 
-  <!-- DASHBOARD -->
-  <section class="max-w-6xl mx-auto mt-6 bg-white p-6 rounded-2xl shadow">
-    <h2 class="text-lg font-semibold mb-4 text-blue-900">Ranking de Fornecedores</h2>
+</div>
 
-    <table class="w-full text-sm border">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="p-2 text-left">Empresa</th>
-          <th class="p-2 text-center">Score</th>
-          <th class="p-2 text-center">Classificação</th>
-        </tr>
-      </thead>
-      <tbody id="ranking"></tbody>
-    </table>
-  </section>
+</header>
 
-  <!-- JS EXTERNO -->
-  <script src="/static/js/app.js"></script>
 
-  <!-- GARANTE QUE O BOTÃO FUNCIONE -->
-  <script>
-    document.getElementById("btnAvaliar").addEventListener("click", avaliarFornecedor);
-  </script>
+<!-- KPI DASHBOARD -->
+
+<section class="max-w-7xl mx-auto mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+<div class="bg-white p-5 rounded-2xl shadow">
+
+<p class="text-gray-500">
+Fornecedores
+</p>
+
+<h2
+id="kpiTotal"
+class="text-3xl font-bold text-blue-900">
+
+0
+
+</h2>
+
+</div>
+
+<div class="bg-white p-5 rounded-2xl shadow">
+
+<p class="text-gray-500">
+Score Médio
+</p>
+
+<h2
+id="kpiScore"
+class="text-3xl font-bold text-green-600">
+
+0
+
+</h2>
+
+</div>
+
+<div class="bg-white p-5 rounded-2xl shadow">
+
+<p class="text-gray-500">
+Aprovados
+</p>
+
+<h2
+id="kpiAprovados"
+class="text-3xl font-bold text-emerald-600">
+
+0
+
+</h2>
+
+</div>
+
+<div class="bg-white p-5 rounded-2xl shadow">
+
+<p class="text-gray-500">
+Críticos
+</p>
+
+<h2
+id="kpiCriticos"
+class="text-3xl font-bold text-red-600">
+
+0
+
+</h2>
+
+</div>
+
+</section>
+
+
+<!-- GRID PRINCIPAL -->
+
+<section class="max-w-7xl mx-auto mt-6 grid grid-cols-12 gap-6 pb-10">
+
+
+<!-- LEFT -->
+
+<div class="col-span-12 lg:col-span-4 space-y-6">
+
+<!-- CADASTRO -->
+
+<div class="bg-white rounded-2xl shadow p-6">
+
+<h2 class="font-bold text-xl mb-4 text-blue-900">
+
+Cadastrar Fornecedor
+
+</h2>
+
+<input
+id="novoNome"
+placeholder="Nome da empresa"
+class="w-full p-3 border rounded-lg mb-3">
+
+<input
+id="novoCnpj"
+placeholder="CNPJ"
+class="w-full p-3 border rounded-lg mb-4">
+
+<button
+onclick="cadastrarFornecedor()"
+class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl">
+
+Cadastrar IA
+
+</button>
+
+</div>
+
+
+<!-- CONSULTA -->
+
+<div class="bg-white rounded-2xl shadow p-6">
+
+<h2 class="font-bold text-xl mb-4 text-blue-900">
+
+Consulta Inteligente
+
+</h2>
+
+<input
+id="nome"
+placeholder="Nome"
+class="w-full p-3 border rounded-lg mb-3">
+
+<input
+id="cnpj"
+placeholder="CNPJ"
+class="w-full p-3 border rounded-lg mb-4">
+
+<button
+id="btnAvaliar"
+class="w-full bg-yellow-500 hover:bg-yellow-600 text-white p-3 rounded-xl">
+
+Avaliar Fornecedor
+
+</button>
+
+</div>
+
+
+<!-- RESULTADO -->
+
+<div class="bg-white rounded-2xl shadow p-6">
+
+<h2 class="font-bold text-xl mb-4 text-blue-900">
+
+Resultado IA
+
+</h2>
+
+<div id="resultado">
+
+<p class="text-gray-400">
+
+Digite nome ou CNPJ.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- RIGHT -->
+
+<div class="col-span-12 lg:col-span-8 space-y-6">
+
+<!-- GRÁFICO -->
+
+<div class="bg-white rounded-2xl shadow p-6">
+
+<h2 class="font-bold text-xl mb-6 text-blue-900">
+
+Ranking Visual
+
+</h2>
+
+<div class="h-[350px]">
+    <canvas id="rankingChart"></canvas>
+</div>
+
+</div>
+
+
+<!-- RANKING TABELA -->
+
+<div class="bg-white rounded-2xl shadow p-6">
+
+<h2 class="font-bold text-xl mb-4 text-blue-900">
+
+Ranking Completo
+
+</h2>
+
+<div class="max-h-[400px] overflow-y-auto">
+
+<table class="w-full">
+
+<thead>
+
+<tr class="border-b bg-slate-50">
+
+<th class="p-3 text-left">
+Empresa
+</th>
+
+<th class="text-center">
+Score
+</th>
+
+<th class="text-center">
+Classificação
+</th>
+
+</tr>
+
+</thead>
+
+<tbody id="ranking">
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<script src="/static/js/app.js"></script>
 
 </body>
+
 </html>

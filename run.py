@@ -4,7 +4,7 @@ import time
 import uvicorn
 
 
-def iniciar_api():
+def start():
 
     uvicorn.run(
         "backend.main:app",
@@ -14,20 +14,16 @@ def iniciar_api():
     )
 
 
-# inicia API
 threading.Thread(
-    target=iniciar_api,
+    target=start,
     daemon=True
 ).start()
 
-# espera subir
-time.sleep(2)
+time.sleep(5)
 
-# abre navegador
 webbrowser.open(
     "http://127.0.0.1:8000"
 )
 
-# mantém aplicação viva
 while True:
     time.sleep(1)
