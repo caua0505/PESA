@@ -410,17 +410,38 @@ function atualizarGrafico(data){
             f=>f.nome
         );
 
+    const cores =
+        data.map(f => {
+
+            if(
+                f.classificacao?.startsWith("A")
+            )
+                return "#16a34a"; // verde
+
+            else if(
+                f.classificacao?.startsWith("B")
+            )
+                return "#eab308"; // amarelo
+
+            else if(
+                f.classificacao?.startsWith("C")
+            )
+                return "#dc2626"; // vermelho
+
+            return "#2563eb"; // padrão
+        });
+
     const scores =
         data.map(
             f=>Number(f.score)
         );
 
-    if(rankingChart){
+            if(rankingChart){
 
-        rankingChart.destroy();
-    }
+                rankingChart.destroy();
+            }
 
-    rankingChart = new Chart(
+            rankingChart = new Chart(
 
         canvas,
 
@@ -438,7 +459,11 @@ function atualizarGrafico(data){
 
                     data:scores,
 
-                    backgroundColor:"#2563eb"
+                    backgroundColor:cores,
+
+                    borderColor:cores,
+
+                    borderWidth:1
 
                 }]
             },
