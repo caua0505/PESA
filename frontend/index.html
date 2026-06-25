@@ -1,298 +1,249 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>PESA | Dashboard ESG IA</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- CSS PERSONALIZADO -->
-<link rel="stylesheet" href="/static/css/style.css">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PESA | Gestão de Fornecedores ESG</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css?v=2" />
 </head>
+<body>
 
-<body class="bg-slate-100 min-h-screen">
+<!-- ══════════════════════════════════════════ SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">P</div>
+    <div>
+      <div class="logo-name">PESA</div>
+      <div class="logo-sub">ESG · Governança</div>
+    </div>
+  </div>
 
-<!-- HEADER -->
+  <nav class="sidebar-nav">
+    <a class="nav-item active" onclick="navegarPara('dashboard')" data-view="dashboard">
+      <span class="nav-icon">▦</span> Dashboard
+    </a>
+    <a class="nav-item" onclick="navegarPara('fornecedores')" data-view="fornecedores">
+      <span class="nav-icon">⊞</span> Fornecedores
+    </a>
+    <a class="nav-item" onclick="navegarPara('cadastrar')" data-view="cadastrar">
+      <span class="nav-icon">＋</span> Cadastrar / Importar
+    </a>
+    <a class="nav-item" onclick="navegarPara('ia')" data-view="ia">
+      <span class="nav-icon">◎</span> Análise IA
+    </a>
+  </nav>
 
-<header class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-xl">
+  <div class="sidebar-footer">
+    <div class="sidebar-status">
+      <span class="status-dot"></span> Sistema Online
+    </div>
+    <div class="sidebar-version">v2.0 · Piloto</div>
+  </div>
+</aside>
 
-<div class="max-w-7xl mx-auto p-6 flex justify-between items-center">
+<!-- ══════════════════════════════════════════ MAIN -->
+<main class="main-content">
 
-<div>
+  <!-- ── TOPBAR ── -->
+  <header class="topbar">
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn-refresh" onclick="recarregar()">↺ Atualizar</button>
+      <div class="topbar-date" id="topbarDate"></div>
+    </div>
+  </header>
 
-<h1 class="text-3xl font-bold">
-PESA Dashboard
-</h1>
+  <!-- ════════════════════════════ VIEW: DASHBOARD -->
+  <section id="view-dashboard" class="view active">
 
-<p class="text-yellow-100">
-Homologação Inteligente ESG + IA
-</p>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total de Fornecedores</div>
+        <div class="kpi-value" id="kpiTotal">—</div>
+        <div class="kpi-sub">cadastrados na base</div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-label">Score Médio ESG</div>
+        <div class="kpi-value" id="kpiScore">—</div>
+        <div class="kpi-sub">média ponderada</div>
+      </div>
+      <div class="kpi-card kpi-emerald">
+        <div class="kpi-label">Aprovados</div>
+        <div class="kpi-value" id="kpiAprovados">—</div>
+        <div class="kpi-sub">score ≥ 70</div>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-label">Com Restrição</div>
+        <div class="kpi-value" id="kpiRestritos">—</div>
+        <div class="kpi-sub">score 60–69</div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-label">Críticos</div>
+        <div class="kpi-value" id="kpiCriticos">—</div>
+        <div class="kpi-sub">score &lt; 60</div>
+      </div>
+    </div>
 
+    <div class="charts-row">
+      <div class="card chart-card">
+        <div class="card-header">Distribuição de Risco</div>
+        <div class="donut-wrap">
+          <canvas id="donutChart"></canvas>
+        </div>
+        <div class="donut-legend">
+          <span class="legend-dot green"></span> Aprovados
+          <span class="legend-dot amber"></span> Restrição
+          <span class="legend-dot red"></span> Críticos
+        </div>
+      </div>
+
+      <div class="card chart-card chart-wide">
+        <div class="card-header">Score por Fornecedor</div>
+        <div class="bar-wrap">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Alertas de Risco <span id="alertCount" class="badge-red"></span></div>
+      <div id="alertasLista" class="alertas-lista">
+        <p class="empty-msg">Nenhum alerta de risco no momento.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ════════════════════════════ VIEW: FORNECEDORES -->
+  <section id="view-fornecedores" class="view">
+
+    <div class="toolbar">
+      <input id="searchInput" class="search-input" placeholder="🔍  Buscar por nome ou CNPJ..." oninput="filtrarTabela()" />
+      <select id="filterClass" class="filter-select" onchange="filtrarTabela()">
+        <option value="">Todos</option>
+        <option value="A">Aprovados</option>
+        <option value="B">Com Restrição</option>
+        <option value="C">Críticos</option>
+      </select>
+      <button class="btn-secondary" onclick="exportarJSON()">↓ Exportar JSON</button>
+    </div>
+
+    <div class="card table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Empresa</th>
+            <th>CNPJ</th>
+            <th class="center">Compliance</th>
+            <th class="center">ESG</th>
+            <th class="center">Reputação</th>
+            <th class="center">Performance</th>
+            <th class="center">Score</th>
+            <th class="center">Status</th>
+            <th class="center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaFornecedores"></tbody>
+      </table>
+      <div id="tabelaVazia" class="empty-msg" style="display:none">Nenhum fornecedor cadastrado ainda.</div>
+    </div>
+
+  </section>
+
+  <!-- ════════════════════════════ VIEW: CADASTRAR / IMPORTAR -->
+  <section id="view-cadastrar" class="view">
+
+    <div class="tabs">
+      <button class="tab active" onclick="ativarTab('manual')">Cadastro Manual</button>
+      <button class="tab" onclick="ativarTab('importar')">Importar do Sistema</button>
+    </div>
+
+    <!-- TAB MANUAL -->
+    <div id="tab-manual" class="tab-content active">
+      <div class="card form-card">
+        <div class="card-header">Novo Fornecedor</div>
+        <p class="form-desc">Os scores ESG são gerados automaticamente pela IA com base no CNPJ cadastrado. Você também pode informá-los manualmente ao importar via JSON.</p>
+
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Nome da Empresa *</label>
+            <input id="novoNome" placeholder="Razão social completa" />
+          </div>
+          <div class="form-group full">
+            <label>CNPJ *</label>
+            <input id="novoCnpj" placeholder="00.000.000/0000-00" oninput="mascaraCNPJ(this)" maxlength="18" />
+          </div>
+        </div>
+
+        <div id="feedbackCadastro" class="feedback"></div>
+        <button class="btn-primary" onclick="cadastrarFornecedor()">Cadastrar Fornecedor</button>
+      </div>
+    </div>
+
+    <!-- TAB IMPORTAR -->
+    <div id="tab-importar" class="tab-content">
+      <div class="card form-card">
+        <div class="card-header">Importar via JSON</div>
+        <p class="form-desc">Cole abaixo o JSON exportado pelo seu ERP, CRM ou sistema de compras. Formato aceito pelo endpoint <code>POST /fornecedor/importar</code>.</p>
+
+        <div class="json-example">
+          <div class="json-example-header">Exemplo de formato esperado:</div>
+          <pre>[
+  {
+    "nome": "Empresa Exemplo Ltda",
+    "cnpj": "11222333000181",
+    "compliance": 85,
+    "esg": 90,
+    "reputacao": 78,
+    "performance": 82
+  }
+]</pre>
+        </div>
+
+        <div class="form-group full" style="margin-top:16px">
+          <label>JSON para importar</label>
+          <textarea id="jsonImport" rows="10" placeholder="Cole o JSON aqui..."></textarea>
+        </div>
+
+        <div id="feedbackImport" class="feedback"></div>
+        <button class="btn-primary" onclick="importarJSON()">Importar Fornecedores</button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ════════════════════════════ VIEW: ANÁLISE IA -->
+  <section id="view-ia" class="view">
+
+    <div class="ia-search-bar">
+      <input id="iaNome" placeholder="Nome do fornecedor..." />
+      <input id="iaCnpj" placeholder="CNPJ..." oninput="mascaraCNPJ(this)" maxlength="18" />
+      <button class="btn-primary" onclick="analisarFornecedor()">Analisar</button>
+    </div>
+
+    <div id="iaResultado" class="ia-resultado-vazio">
+      <div class="ia-placeholder-icon">◎</div>
+      <p>Busque um fornecedor pelo nome ou CNPJ para ver a análise completa.</p>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- ══════════════════════════════════════════ MODAL EXCLUSÃO -->
+<div id="modalExcluir" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">Confirmar exclusão</div>
+    <p id="modalMsg"></p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-danger" id="btnConfirmarExcluir">Excluir</button>
+    </div>
+  </div>
 </div>
-
-<div class="text-right">
-
-<p class="font-semibold">
-Piloto Executivo
-</p>
-
-<p class="text-sm">
-FastAPI + IA
-</p>
-
-</div>
-
-</div>
-
-</header>
-
-
-<!-- KPI DASHBOARD -->
-
-<section class="max-w-7xl mx-auto mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-<div class="bg-white p-5 rounded-2xl shadow">
-
-<p class="text-gray-500">
-Fornecedores
-</p>
-
-<h2
-id="kpiTotal"
-class="text-3xl font-bold text-blue-900">
-
-0
-
-</h2>
-
-</div>
-
-<div class="bg-white p-5 rounded-2xl shadow">
-
-<p class="text-gray-500">
-Score Médio
-</p>
-
-<h2
-id="kpiScore"
-class="text-3xl font-bold text-green-600">
-
-0
-
-</h2>
-
-</div>
-
-<div class="bg-white p-5 rounded-2xl shadow">
-
-<p class="text-gray-500">
-Aprovados
-</p>
-
-<h2
-id="kpiAprovados"
-class="text-3xl font-bold text-emerald-600">
-
-0
-
-</h2>
-
-</div>
-
-<div class="bg-white p-5 rounded-2xl shadow">
-
-<p class="text-gray-500">
-Críticos
-</p>
-
-<h2
-id="kpiCriticos"
-class="text-3xl font-bold text-red-600">
-
-0
-
-</h2>
-
-</div>
-
-</section>
-
-
-<!-- GRID PRINCIPAL -->
-
-<section class="max-w-7xl mx-auto mt-6 grid grid-cols-12 gap-6 pb-10">
-
-
-<!-- LEFT -->
-
-<div class="col-span-12 lg:col-span-4 space-y-6">
-
-<!-- CADASTRO -->
-
-<div class="bg-white rounded-2xl shadow p-6">
-
-<h2 class="font-bold text-xl mb-4 text-blue-900">
-
-Cadastrar Fornecedor
-
-</h2>
-
-<input
-id="novoNome"
-placeholder="Nome da empresa"
-class="w-full p-3 border rounded-lg mb-3">
-
-<input
-id="novoCnpj"
-placeholder="CNPJ"
-class="w-full p-3 border rounded-lg mb-4">
-
-<button
-onclick="cadastrarFornecedor()"
-class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl">
-
-Cadastrar IA
-
-</button>
-
-</div>
-
-
-<!-- CONSULTA -->
-
-<div class="bg-white rounded-2xl shadow p-6">
-
-<h2 class="font-bold text-xl mb-4 text-blue-900">
-
-Consulta Inteligente
-
-</h2>
-
-<input
-id="nome"
-placeholder="Nome"
-class="w-full p-3 border rounded-lg mb-3">
-
-<input
-id="cnpj"
-placeholder="CNPJ"
-class="w-full p-3 border rounded-lg mb-4">
-
-<button
-id="btnAvaliar"
-class="w-full bg-yellow-500 hover:bg-yellow-600 text-white p-3 rounded-xl">
-
-Avaliar Fornecedor
-
-</button>
-
-</div>
-
-
-<!-- RESULTADO -->
-
-<div class="bg-white rounded-2xl shadow p-6">
-
-<h2 class="font-bold text-xl mb-4 text-blue-900">
-
-Resultado IA
-
-</h2>
-
-<div id="resultado">
-
-<p class="text-gray-400">
-
-Digite nome ou CNPJ.
-
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- RIGHT -->
-
-<div class="col-span-12 lg:col-span-8 space-y-6">
-
-<!-- GRÁFICO -->
-
-<div class="bg-white rounded-2xl shadow p-6">
-
-<h2 class="font-bold text-xl mb-6 text-blue-900">
-
-Ranking Visual
-
-</h2>
-
-<div class="h-[350px]">
-    <canvas id="rankingChart"></canvas>
-</div>
-
-</div>
-
-
-<!-- RANKING TABELA -->
-
-<div class="bg-white rounded-2xl shadow p-6">
-
-<h2 class="font-bold text-xl mb-4 text-blue-900">
-
-Ranking Completo
-
-</h2>
-
-<div class="max-h-[400px] overflow-y-auto">
-
-<table class="w-full">
-
-<thead>
-
-<tr class="border-b bg-slate-50">
-
-<th class="p-3 text-left">
-Empresa
-</th>
-
-<th class="text-center">
-Score
-</th>
-
-<th class="text-center">
-Classificação
-</th>
-
-</tr>
-
-</thead>
-
-<tbody id="ranking">
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
 
 <script src="/static/js/app.js"></script>
-
 </body>
-
 </html>

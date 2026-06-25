@@ -1,29 +1,32 @@
+import multiprocessing
 import threading
 import webbrowser
 import time
 import uvicorn
 
+from backend.main import app
+
 
 def start():
-
     uvicorn.run(
-        "backend.main:app",
+        app,
         host="127.0.0.1",
         port=8000,
         reload=False
     )
 
 
-threading.Thread(
-    target=start,
-    daemon=True
-).start()
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
 
-time.sleep(5)
+    threading.Thread(
+        target=start,
+        daemon=True
+    ).start()
 
-webbrowser.open(
-    "http://127.0.0.1:8000"
-)
+    time.sleep(3)
 
-while True:
-    time.sleep(1)
+    webbrowser.open("http://127.0.0.1:8000")
+
+    while True:
+        time.sleep(1)
